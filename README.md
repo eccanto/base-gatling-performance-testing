@@ -3,8 +3,9 @@
 # Load testing using Gatling (Scala)
 
 Related projects (branches):
-- [Load testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/load-testing-scala) `[current branch]`
+- [Load testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/load-testing-scala)
 - [Load testing using Gatling (Java)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/load-testing-java)
+- [Stress testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/stress-testing-scala) `[current branch]`
 
 # Table of contents
 
@@ -74,8 +75,6 @@ The load test will execute `1000` requests from `10` gatling workers (each worke
     docker-compose up --scale worker=10
     ```
 4. The Gatling report file is saved in `results/reports/index.html`.
-    ![Gatling Report](documentation/images/gatling_report.png)
-
     [![Gatling Report](documentation/images/gatling_report.png)](./sample/reports/index.html)
 
 # License
