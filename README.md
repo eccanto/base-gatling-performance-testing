@@ -1,6 +1,10 @@
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
-# Load testing using Gatling
+# Load testing using Gatling (Java)
+
+Related projects (branches):
+- [Load testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/load-testing-scala)
+- [Load testing using Gatling (Java)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/load-testing-java) `[current branch]`
 
 # Table of contents
 
@@ -43,10 +47,10 @@ The following Scala code represents our load testing Gatling example:
 
 ![Gatling Code](documentation/images/gatling_code.png)
 
-- `line 10-12`: Gets server host and credentials.
-- `line 13`: Gets the number of "iterations" by worker (defined in the [docker-compose.yml](./docker-compose.yml)).
-- `line 18-24`: Log in and gets the JWT from the server.
-- `line 26-31`: Task to obtain users data from the server (must be executed `1000` times).
+- `line 11-13`: Gets server host and credentials.
+- `line 14`: Gets the number of "iterations" by worker (defined in the [docker-compose.yml](./docker-compose.yml)).
+- `line 19-25`: Log in and gets the JWT from the server.
+- `line 27-32`: Task to obtain users data from the server (must be executed `1000` times).
 
 ## Requirements
 
