@@ -1,0 +1,10 @@
+{
+  "simulation": "computerdatabase.BasicSimulationScala",
+  "simulationId": "basicsimulationscala-20221008205534434",
+  "start": 1665262536065,
+  "description": "Basic Example",
+  "scenarios": ["BasicSimulationScala"],
+  "assertions": [
+
+  ]
+}

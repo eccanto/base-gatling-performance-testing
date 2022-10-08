@@ -31,6 +31,9 @@ class BasicSimulationScala extends Simulation {
         )
 
     setUp(
-        test_case.inject(atOnceUsers(ITERATIONS))
-    ).protocols(httpProtocol)
+        test_case.inject(
+            constantUsersPerSec(100).during(1.minutes)
+        )
+    )
+    .protocols(httpProtocol)
 }

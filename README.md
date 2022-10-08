@@ -76,6 +76,8 @@ The load test will execute `1000` requests from `10` gatling workers (each worke
 4. The Gatling report file is saved in `results/reports/index.html`.
     ![Gatling Report](documentation/images/gatling_report.png)
 
+    [![Gatling Report](documentation/images/gatling_report.png)](./sample/reports/index.html)
+
 # License
 
 [MIT](./LICENSE)
