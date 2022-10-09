@@ -3,6 +3,7 @@
 # Load testing using Gatling (Java)
 
 Related projects (branches):
+- [Performance testing using Gatling](https://github.com/eccanto/base-gatling-performance-testing)
 - [Load testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/load-testing-scala)
 - [Load testing using Gatling (Java)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/load-testing-java) `[current branch]`
 - [Stress testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/stress-testing-scala)
