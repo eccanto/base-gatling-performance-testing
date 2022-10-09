@@ -26,6 +26,10 @@ The system will be tested with a load of `1000` requests per second from `10` Ga
 (each worker will execute `100` requests per second). The system will load beyond its peak capacity to the point of
 failure.
 
+Total expected requests: `1000` * `60` * `2` = **`120000`** (in 1 minute)
+
+**Note**: `2` is the number of events of the scenario (`login` and `get users data`).
+
 ## Scenario
 
 The following Scala code represents our stress testing Gatling example:
@@ -58,7 +62,7 @@ class BasicSimulationScala extends Simulation {
 
     setUp(
         test_case.inject(
-            constantUsersPerSec(100).during(1.minutes)
+            constantUsersPerSec(ITERATIONS).during(1.minutes)
         )
     )
     .protocols(httpProtocol)
@@ -66,9 +70,9 @@ class BasicSimulationScala extends Simulation {
 ```
 
 - `(1)`: Gets server host and credentials.
-- `(2)`: Gets the number of "iterations" by worker (defined in the [docker-compose.yml](./docker-compose.yml)).
+- `(2)`: Gets the number of "iterations" by worker [per second] (defined in the [docker-compose.yml](./docker-compose.yml)).
 - `(3)`: Log in and gets the JWT from the server.
-- `(4)`: Task to obtain users data from the server (must be executed `1000` times).
+- `(4)`: Task to obtain users data from the server.
 
 # Get Started
 
