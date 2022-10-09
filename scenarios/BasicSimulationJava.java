@@ -11,6 +11,7 @@ public class BasicSimulationJava extends Simulation {
     final String SERVER_HOST = System.getenv("SERVER_HOST");
     final String API_USERNAME = System.getenv("API_USERNAME");
     final String API_PASSWORD = System.getenv("API_PASSWORD");
+
     final int ITERATIONS = Integer.parseInt(System.getenv("ITERATIONS"));
 
     final HttpProtocolBuilder httpProtocol = http.baseUrl(SERVER_HOST);

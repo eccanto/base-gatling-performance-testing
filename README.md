@@ -5,25 +5,72 @@
 Related projects (branches):
 - [Load testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/load-testing-scala)
 - [Load testing using Gatling (Java)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/load-testing-java) `[current branch]`
+- [Stress testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/stress-testing-scala)
+- [Stress testing using Gatling (Java)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/stress-testing-java)
 
 # Table of contents
 
 * [Overview](#overview)
-* [Get started](#get-started)
   * [Objetive](#objetive)
   * [Scenario](#scenario)
+* [Get started](#get-started)
   * [Requirements](#requirements)
   * [Run](#run)
 * [License](#license)
 
 # Overview
 
-[Gatling](https://github.com/gatling/gatling) is a performance testing tool used for load testing and user behavior
-simulation. Load testing is the practice of testing a software application with the primary purpose of stressing the
-application's capabilities.
+## Objetive
 
-For load testing Gatling presents test results in a offline report. One of the significant features of Gatling is its
-[well-documented code source](https://gatling.io/docs/gatling/).
+The system will be tested with a load of `1000` requests from `10` Gatling **workers** (each worker will execute `100`
+requests). The system should process all requests correctly.
+
+Total expected requests: 100 * 10 * 2 = **`2000`**
+
+**Note**: `2` is the number of events of the scenario (`login` and `get users data`).
+
+## Scenario
+
+The following Java code represents our load testing Gatling example:
+
+```Java
+public class BasicSimulationJava extends Simulation {
+    final String SERVER_HOST = System.getenv("SERVER_HOST");               // (1)
+    final String API_USERNAME = System.getenv("API_USERNAME");             // (1)
+    final String API_PASSWORD = System.getenv("API_PASSWORD");             // (1)
+
+    final int ITERATIONS = Integer.parseInt(System.getenv("ITERATIONS"));  // (2)
+
+    final HttpProtocolBuilder httpProtocol = http.baseUrl(SERVER_HOST);
+
+    final ScenarioBuilder test_case = scenario("BasicSimulation")
+        .exec(                                                             // (3)
+            http("Authentication")                                         // (3)
+                .get("/api/token")                                         // (3)
+                .basicAuth(API_USERNAME, API_PASSWORD)                     // (3)
+                .check(status().is(200))                                   // (3)
+                .check(jsonPath("$.access").saveAs("jwt_token"))           // (3)
+        )                                                                  // (3)
+        .exitHereIfFailed()
+        .exec(                                                             // (4)
+            http("GetUsers")                                               // (4)
+                .get("/api/users")                                         // (4)
+                .header("Authorization", "JWT ${jwt_token}")               // (4)
+                .check(status().is(200))                                   // (4)
+        );                                                                 // (4)
+
+    {
+        setUp(
+            test_case.injectOpen(atOnceUsers(ITERATIONS))
+        ).protocols(httpProtocol);
+    }
+}
+```
+
+- `(1)`: Gets server host and credentials.
+- `(2)`: Gets the number of "iterations" by worker (defined in the [docker-compose.yml](./docker-compose.yml)).
+- `(3)`: Log in and gets the JWT from the server (must be executed `1000` times).
+- `(4)`: Task to obtain users data from the server (must be executed `1000` times).
 
 # Get Started
 
@@ -32,34 +79,12 @@ In this example, you will run a login and obtain users information using
 server mock defined in this repository:
 [base-mockoon-api-rest-server-mock](https://raw.githubusercontent.com/eccanto/base-mockoon-api-rest-server-mock).
 
-## Objetive
-
-The system will be tested with a load of `1000` requests from `10` Gatling **workers**. We'll begin by creating a
-controller container and several worker containers. There are certain prerequisites that we have to perform on all
-these workers. These include installing Gatling on all workers and setting up the scenario.
-
-To achieve a consistent result, we should install the same version of Gatling on all workers, with the same
-configuration on each one.
-
-## Scenario
-
-The following Scala code represents our load testing Gatling example:
-
-![Gatling Code](documentation/images/gatling_code.png)
-
-- `line 11-13`: Gets server host and credentials.
-- `line 14`: Gets the number of "iterations" by worker (defined in the [docker-compose.yml](./docker-compose.yml)).
-- `line 19-25`: Log in and gets the JWT from the server.
-- `line 27-32`: Task to obtain users data from the server (must be executed `1000` times).
-
 ## Requirements
 
 - [Docker +20.10](https://docs.docker.com/engine/install/ubuntu/)
 - [docker-compose +1.29](https://docs.docker.com/desktop/install/linux-install/)
 
 ## Run
-
-The load test will execute `1000` requests from `10` gatling workers (each worker will execute `100` requests).
 
 1. Run [REST API server mock](https://github.com/eccanto/base-mockoon-api-rest-server-mock) (address: http://localhost:3000).
 2. Edit [mock_variables.env](./mock_variables.env):
