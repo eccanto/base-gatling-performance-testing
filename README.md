@@ -25,7 +25,7 @@ Related projects (branches):
 The system will be tested with a load of `1000` requests from `10` Gatling **workers** (each worker will execute `100`
 requests). The system should process all requests correctly.
 
-Total expected requests: 100 * 10 * 2 = **`2000`**
+Total expected requests: `100` * `10` * `2` = **`2000`**
 
 **Note**: `2` is the number of events of the scenario (`login` and `get users data`).
 
@@ -73,11 +73,6 @@ public class BasicSimulationJava extends Simulation {
 - `(4)`: Task to obtain users data from the server (must be executed `1000` times).
 
 # Get Started
-
-In this example, you will run a login and obtain users information using
-[JSON Web Token](https://www.rfc-editor.org/rfc/rfc7519) Authentication. The tested application will be a REST API
-server mock defined in this repository:
-[base-mockoon-api-rest-server-mock](https://raw.githubusercontent.com/eccanto/base-mockoon-api-rest-server-mock).
 
 ## Requirements
 
