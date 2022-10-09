@@ -10,6 +10,7 @@ class BasicSimulationScala extends Simulation {
     val SERVER_HOST = sys.env.get("SERVER_HOST").get
     val API_USERNAME = sys.env.get("API_USERNAME").get
     val API_PASSWORD = sys.env.get("API_PASSWORD").get
+
     val ITERATIONS = sys.env.get("ITERATIONS").get.toInt
 
     val httpProtocol = http.baseUrl(SERVER_HOST)
@@ -31,6 +32,8 @@ class BasicSimulationScala extends Simulation {
         )
 
     setUp(
-        test_case.inject(atOnceUsers(ITERATIONS))
+        test_case.inject(
+            atOnceUsers(ITERATIONS)
+        )
     ).protocols(httpProtocol)
 }
