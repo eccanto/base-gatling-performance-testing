@@ -1,12 +1,12 @@
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
-# Stress testing using Gatling (Scala)
+# Stress testing using Gatling (Java)
 
 Related projects (branches):
 - [Load testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/load-testing-scala)
 - [Load testing using Gatling (Java)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/load-testing-java)
-- [Stress testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/stress-testing-scala) `[current branch]`
-- [Stress testing using Gatling (Java)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/stress-testing-java)
+- [Stress testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/stress-testing-scala)
+- [Stress testing using Gatling (Java)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/stress-testing-java) `[current branch]`
 
 # Table of contents
 
@@ -32,40 +32,41 @@ Total expected requests: `1000` * `60` * `2` = **`120000`** (in 1 minute)
 
 ## Scenario
 
-The following Scala code represents our stress testing Gatling example:
+The following Java code represents our stress testing Gatling example:
 
-```scala
-class BasicSimulationScala extends Simulation {
-    val SERVER_HOST = sys.env.get("SERVER_HOST").get              // (1)
-    val API_USERNAME = sys.env.get("API_USERNAME").get            // (1)
-    val API_PASSWORD = sys.env.get("API_PASSWORD").get            // (1)
+```java
+public class BasicSimulationJava extends Simulation {
+    final String SERVER_HOST = System.getenv("SERVER_HOST");               // (1)
+    final String API_USERNAME = System.getenv("API_USERNAME");             // (1)
+    final String API_PASSWORD = System.getenv("API_PASSWORD");             // (1)
 
-    val ITERATIONS = sys.env.get("ITERATIONS").get.toInt          // (2)
+    final int ITERATIONS = Integer.parseInt(System.getenv("ITERATIONS"));  // (2)
 
-    val httpProtocol = http.baseUrl(SERVER_HOST)
+    final HttpProtocolBuilder httpProtocol = http.baseUrl(SERVER_HOST);
 
-    val test_case = scenario("BasicSimulationScala")
-        .exec(                                                    // (3)
-            http("Authentication")                                // (3)
-                .get("/api/token")                                // (3)
-                .basicAuth(API_USERNAME, API_PASSWORD)            // (3)
-                .check(status.is(200))                            // (3)
-                .check(jsonPath("$.access").saveAs("jwt_token"))  // (3)
-        )                                                         // (3)
-        .exitHereIfFailed
-        .exec(                                                    // (4)
-            http("GetUsers")                                      // (4)
-                .get("/api/users")                                // (4)
-                .header("Authorization", "JWT ${jwt_token}")      // (4)
-                .check(status.is(200))                            // (4)
-        )                                                         // (4)
+    final ScenarioBuilder test_case = scenario("BasicSimulation")
+        .exec(                                                             // (3)
+            http("Authentication")                                         // (3)
+                .get("/api/token")                                         // (3)
+                .basicAuth(API_USERNAME, API_PASSWORD)                     // (3)
+                .check(status().is(200))                                   // (3)
+                .check(jsonPath("$.access").saveAs("jwt_token"))           // (3)
+        )                                                                  // (3)
+        .exitHereIfFailed()
+        .exec(                                                             // (4)
+            http("GetUsers")                                               // (4)
+                .get("/api/users")                                         // (4)
+                .header("Authorization", "JWT ${jwt_token}")               // (4)
+                .check(status().is(200))                                   // (4)
+        );                                                                 // (4)
 
-    setUp(
-        test_case.inject(
-            constantUsersPerSec(ITERATIONS).during(1.minutes)
-        )
-    )
-    .protocols(httpProtocol)
+    {
+        setUp(
+            test_case.injectOpen(
+                constantUsersPerSec(ITERATIONS).during(Duration.ofMinutes(1))
+            )
+        ).protocols(httpProtocol);
+    }
 }
 ```
 
