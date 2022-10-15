@@ -1,13 +1,15 @@
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
-# Stress testing using Gatling (Scala)
+# Spike testing using Gatling (Scala)
 
 Related projects (branches):
 - [Performance testing using Gatling](https://github.com/eccanto/base-gatling-performance-testing)
 - [Load testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/load-testing-scala)
 - [Load testing using Gatling (Java)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/load-testing-java)
-- [Stress testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/stress-testing-scala) `[current branch]`
+- [Stress testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/stress-testing-scala)
 - [Stress testing using Gatling (Java)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/stress-testing-java)
+- [Spike testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/spike-testing-scala) `[current branch]`
+- [Spike testing using Gatling (Java)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/spike-testing-java)
 
 # Table of contents
 
@@ -23,13 +25,29 @@ Related projects (branches):
 
 ## Objetive
 
-The system will be tested with a load of `1000` requests per second from `10` Gatling **workers** during 1 minutes
-(each worker will execute `100` requests per second). The system will load beyond its peak capacity to the point of
-failure.
+The system will be tested with a load of `600` requests per second with load increases to `1000` requests periodically
+from `10` Gatling **workers** during ~ 5 minutes and 40 seconds (each worker will execute `60` and `100` requests per
+second respectively). The system will load beyond its peak capacity periodically to the point of failure.
 
-Total expected requests: `1000` * `60` * `2` = **`120000`** (in 1 minute)
+Simulation example:
 
-**Note**: `2` is the number of events of the scenario (`login` and `get users data`).
+![Simulation Example](documentation/images/simulation_example.png)
+
+Configuration:
+- `SIMULATION_CYCLES`: 5 cycles (maximum peaks).
+  ![Simulation Example](documentation/images/simulation_cycles.png)
+
+- `SIMULATION_REACH_SECONDS`: 10 seconds, initial gradual loading time.
+  ![Simulation Reach](documentation/images/simulation_reach.png)
+
+- `SIMULATION_CYCLE_SECONDS`: 30 seconds, duration of each interval.
+  ![Simulation Cycle Duration](documentation/images/simulation_cycle_duration.png)
+
+- `SIMULATION_MINIMUM_PEAK`: 60 requests (in each worker, 600 in total).
+  ![Simulation Minimum Peak](documentation/images/simulation_minimum_peak.png)
+
+- `SIMULATION_MAXIMUM_PEAK`: 100 requests (in each worker, 1000 in total).
+  ![Simulation Maximum Peak](documentation/images/simulation_maximum_peak.png)
 
 ## Scenario
 
@@ -37,34 +55,56 @@ The following Scala code represents our stress testing Gatling example:
 
 ```scala
 class BasicSimulationScala extends Simulation {
-    val SERVER_HOST = sys.env.get("SERVER_HOST").get              // (1)
-    val API_USERNAME = sys.env.get("API_USERNAME").get            // (1)
-    val API_PASSWORD = sys.env.get("API_PASSWORD").get            // (1)
+    val SERVER_HOST = sys.env.get("SERVER_HOST").get
+    val API_USERNAME = sys.env.get("API_USERNAME").get
+    val API_PASSWORD = sys.env.get("API_PASSWORD").get
 
-    val ITERATIONS = sys.env.get("ITERATIONS").get.toInt          // (2)
+    val SIMULATION_CYCLES = sys.env.get("SIMULATION_CYCLES").get.toInt
+    val SIMULATION_REACH_SECONDS = sys.env.get("SIMULATION_REACH_SECONDS").get.toInt
+    val SIMULATION_CYCLE_SECONDS = sys.env.get("SIMULATION_CYCLE_SECONDS").get.toInt
+    val SIMULATION_MINIMUM_PEAK = sys.env.get("SIMULATION_MINIMUM_PEAK").get.toInt
+    val SIMULATION_MAXIMUM_PEAK = sys.env.get("SIMULATION_MAXIMUM_PEAK").get.toInt
 
     val httpProtocol = http.baseUrl(SERVER_HOST)
 
     val test_case = scenario("BasicSimulationScala")
-        .exec(                                                    // (3)
-            http("Authentication")                                // (3)
-                .get("/api/token")                                // (3)
-                .basicAuth(API_USERNAME, API_PASSWORD)            // (3)
-                .check(status.is(200))                            // (3)
-                .check(jsonPath("$.access").saveAs("jwt_token"))  // (3)
-        )                                                         // (3)
+        .exec(
+            http("Authentication")
+                .get("/api/token")
+                .basicAuth(API_USERNAME, API_PASSWORD)
+                .check(status.is(200))
+                .check(jsonPath("$.access").saveAs("jwt_token"))
+        )
         .exitHereIfFailed
-        .exec(                                                    // (4)
-            http("GetUsers")                                      // (4)
-                .get("/api/users")                                // (4)
-                .header("Authorization", "JWT ${jwt_token}")      // (4)
-                .check(status.is(200))                            // (4)
-        )                                                         // (4)
+        .exec(
+            http("GetUsers")
+                .get("/api/users")
+                .header("Authorization", "JWT ${jwt_token}")
+                .check(status.is(200))
+        )
+
+    var simulation_cycle = List(
+        reachRps(SIMULATION_MINIMUM_PEAK).in(SIMULATION_REACH_SECONDS.seconds),
+        holdFor(SIMULATION_CYCLE_SECONDS.seconds)
+    )
+
+    for(interval <- 0 until SIMULATION_CYCLES)
+    {
+        simulation_cycle = simulation_cycle :+ jumpToRps(SIMULATION_MAXIMUM_PEAK)
+        simulation_cycle = simulation_cycle :+ holdFor(SIMULATION_CYCLE_SECONDS.seconds)
+        simulation_cycle = simulation_cycle :+ jumpToRps(SIMULATION_MINIMUM_PEAK)
+        simulation_cycle = simulation_cycle :+ holdFor(SIMULATION_CYCLE_SECONDS.seconds)
+    }
 
     setUp(
         test_case.inject(
-            constantUsersPerSec(ITERATIONS).during(1.minutes)
+            constantUsersPerSec(SIMULATION_MAXIMUM_PEAK).during(
+                (SIMULATION_REACH_SECONDS + SIMULATION_CYCLE_SECONDS + (SIMULATION_CYCLES * SIMULATION_CYCLE_SECONDS * 2)).seconds
+            )
         )
+    )
+    .throttle(
+        simulation_cycle:_*
     )
     .protocols(httpProtocol)
 }
@@ -97,7 +137,8 @@ class BasicSimulationScala extends Simulation {
     docker-compose up --scale worker=10
     ```
 4. The Gatling report file is saved in `results/reports/index.html`.
-    [![Gatling Report](documentation/images/gatling_report.png)](./sample/reports/index.html)
+    ![Gatling Report](documentation/images/gatling_report.png)
+    ![Simulation Example](documentation/images/simulation_example.png)
 
 # License
 

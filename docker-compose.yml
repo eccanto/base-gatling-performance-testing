@@ -25,7 +25,11 @@ services:
     env_file:
       - mock_variables.env
     environment:
-      - ITERATIONS=100
+      - SIMULATION_CYCLES=5
+      - SIMULATION_REACH_SECONDS=10
+      - SIMULATION_CYCLE_SECONDS=30
+      - SIMULATION_MINIMUM_PEAK=60
+      - SIMULATION_MAXIMUM_PEAK=100
     volumes:
       - ./results/reports:/opt/gatling/results
       - ./scenarios:/opt/gatling/scenarios
