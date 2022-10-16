@@ -55,46 +55,46 @@ The following Scala code represents our stress testing Gatling example:
 
 ```scala
 class BasicSimulationScala extends Simulation {
-    val SERVER_HOST = sys.env.get("SERVER_HOST").get
-    val API_USERNAME = sys.env.get("API_USERNAME").get
-    val API_PASSWORD = sys.env.get("API_PASSWORD").get
+    val SERVER_HOST = sys.env.get("SERVER_HOST").get                                      // (1)
+    val API_USERNAME = sys.env.get("API_USERNAME").get                                    // (1)
+    val API_PASSWORD = sys.env.get("API_PASSWORD").get                                    // (1)
 
-    val SIMULATION_CYCLES = sys.env.get("SIMULATION_CYCLES").get.toInt
-    val SIMULATION_REACH_SECONDS = sys.env.get("SIMULATION_REACH_SECONDS").get.toInt
-    val SIMULATION_CYCLE_SECONDS = sys.env.get("SIMULATION_CYCLE_SECONDS").get.toInt
-    val SIMULATION_MINIMUM_PEAK = sys.env.get("SIMULATION_MINIMUM_PEAK").get.toInt
-    val SIMULATION_MAXIMUM_PEAK = sys.env.get("SIMULATION_MAXIMUM_PEAK").get.toInt
+    val SIMULATION_CYCLES = sys.env.get("SIMULATION_CYCLES").get.toInt                    // (2)
+    val SIMULATION_REACH_SECONDS = sys.env.get("SIMULATION_REACH_SECONDS").get.toInt      // (2)
+    val SIMULATION_CYCLE_SECONDS = sys.env.get("SIMULATION_CYCLE_SECONDS").get.toInt      // (2)
+    val SIMULATION_MINIMUM_PEAK = sys.env.get("SIMULATION_MINIMUM_PEAK").get.toInt        // (2)
+    val SIMULATION_MAXIMUM_PEAK = sys.env.get("SIMULATION_MAXIMUM_PEAK").get.toInt        // (2)
 
     val httpProtocol = http.baseUrl(SERVER_HOST)
 
     val test_case = scenario("BasicSimulationScala")
-        .exec(
-            http("Authentication")
-                .get("/api/token")
-                .basicAuth(API_USERNAME, API_PASSWORD)
-                .check(status.is(200))
-                .check(jsonPath("$.access").saveAs("jwt_token"))
-        )
+        .exec(                                                                            // (3)
+            http("Authentication")                                                        // (3)
+                .get("/api/token")                                                        // (3)
+                .basicAuth(API_USERNAME, API_PASSWORD)                                    // (3)
+                .check(status.is(200))                                                    // (3)
+                .check(jsonPath("$.access").saveAs("jwt_token"))                          // (3)
+        )                                                                                 // (3)
         .exitHereIfFailed
-        .exec(
-            http("GetUsers")
-                .get("/api/users")
-                .header("Authorization", "JWT ${jwt_token}")
-                .check(status.is(200))
-        )
+        .exec(                                                                            // (4)
+            http("GetUsers")                                                              // (4)
+                .get("/api/users")                                                        // (4)
+                .header("Authorization", "JWT ${jwt_token}")                              // (4)
+                .check(status.is(200))                                                    // (4)
+        )                                                                                 // (4)
 
-    var simulation_cycle = List(
-        reachRps(SIMULATION_MINIMUM_PEAK).in(SIMULATION_REACH_SECONDS.seconds),
-        holdFor(SIMULATION_CYCLE_SECONDS.seconds)
-    )
+    var simulation_cycle = List(                                                          // (5)
+        reachRps(SIMULATION_MINIMUM_PEAK).in(SIMULATION_REACH_SECONDS.seconds),           // (5)
+        holdFor(SIMULATION_CYCLE_SECONDS.seconds)                                         // (5)
+    )                                                                                     // (5)
 
-    for(interval <- 0 until SIMULATION_CYCLES)
-    {
-        simulation_cycle = simulation_cycle :+ jumpToRps(SIMULATION_MAXIMUM_PEAK)
-        simulation_cycle = simulation_cycle :+ holdFor(SIMULATION_CYCLE_SECONDS.seconds)
-        simulation_cycle = simulation_cycle :+ jumpToRps(SIMULATION_MINIMUM_PEAK)
-        simulation_cycle = simulation_cycle :+ holdFor(SIMULATION_CYCLE_SECONDS.seconds)
-    }
+    for(interval <- 0 until SIMULATION_CYCLES)                                            // (6)
+    {                                                                                     // (6)
+        simulation_cycle = simulation_cycle :+ jumpToRps(SIMULATION_MAXIMUM_PEAK)         // (6)
+        simulation_cycle = simulation_cycle :+ holdFor(SIMULATION_CYCLE_SECONDS.seconds)  // (6)
+        simulation_cycle = simulation_cycle :+ jumpToRps(SIMULATION_MINIMUM_PEAK)         // (6)
+        simulation_cycle = simulation_cycle :+ holdFor(SIMULATION_CYCLE_SECONDS.seconds)  // (6)
+    }                                                                                     // (6)
 
     setUp(
         test_case.inject(
@@ -111,9 +111,11 @@ class BasicSimulationScala extends Simulation {
 ```
 
 - `(1)`: Gets server host and credentials.
-- `(2)`: Gets the number of "iterations" by worker [per second] (defined in the [docker-compose.yml](./docker-compose.yml)).
+- `(2)`: Gets the configuration variables (defined in the [docker-compose.yml](./docker-compose.yml)).
 - `(3)`: Log in and gets the JWT from the server.
 - `(4)`: Task to obtain users data from the server.
+- `(5)`: Defines the first part of the simulation, the number of requests gradually increases.
+- `(6)`: Defines the simulation intervals that emulate low and high peak loads repeatedly.
 
 # Get Started
 
