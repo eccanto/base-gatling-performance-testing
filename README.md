@@ -1,6 +1,6 @@
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
-# Spike testing using Gatling (Scala)
+# Spike testing using Gatling (Java)
 
 Related projects (branches):
 - [Performance testing using Gatling](https://github.com/eccanto/base-gatling-performance-testing)
@@ -8,8 +8,8 @@ Related projects (branches):
 - [Load testing using Gatling (Java)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/load-testing-java)
 - [Stress testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/stress-testing-scala)
 - [Stress testing using Gatling (Java)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/stress-testing-java)
-- [Spike testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/spike-testing-scala) `[current branch]`
-- [Spike testing using Gatling (Java)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/spike-testing-java)
+- [Spike testing using Gatling (Scala)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/spike-testing-scala)
+- [Spike testing using Gatling (Java)](https://github.com/eccanto/base-gatling-performance-testing/tree/feature/spike-testing-java) `[current branch]`
 
 # Table of contents
 
@@ -34,79 +34,85 @@ Simulation example:
 ![Simulation Example](documentation/images/simulation_example.png)
 
 Configuration:
+
 - `SIMULATION_CYCLES`: 5 cycles (maximum peaks).
-  ![Simulation Example](documentation/images/simulation_cycles.png)
+
+  ![Simulation Cycles](documentation/images/simulation_cycles.png)
 
 - `SIMULATION_REACH_SECONDS`: 10 seconds, initial gradual loading time.
+
   ![Simulation Reach](documentation/images/simulation_reach.png)
 
 - `SIMULATION_CYCLE_SECONDS`: 30 seconds, duration of each interval.
+
   ![Simulation Cycle Duration](documentation/images/simulation_cycle_duration.png)
 
 - `SIMULATION_MINIMUM_PEAK`: 60 requests (in each worker, 600 in total).
+
   ![Simulation Minimum Peak](documentation/images/simulation_minimum_peak.png)
 
 - `SIMULATION_MAXIMUM_PEAK`: 100 requests (in each worker, 1000 in total).
+
   ![Simulation Maximum Peak](documentation/images/simulation_maximum_peak.png)
 
 ## Scenario
 
-The following Scala code represents our stress testing Gatling example:
+The following Java code represents our stress testing Gatling example:
 
-```scala
-class BasicSimulationScala extends Simulation {
-    val SERVER_HOST = sys.env.get("SERVER_HOST").get                                      // (1)
-    val API_USERNAME = sys.env.get("API_USERNAME").get                                    // (1)
-    val API_PASSWORD = sys.env.get("API_PASSWORD").get                                    // (1)
+```java
+public class BasicSimulationJava extends Simulation {
+    final String SERVER_HOST = System.getenv("SERVER_HOST");                                                       // (1)
+    final String API_USERNAME = System.getenv("API_USERNAME");                                                     // (1)
+    final String API_PASSWORD = System.getenv("API_PASSWORD");                                                     // (1)
 
-    val SIMULATION_CYCLES = sys.env.get("SIMULATION_CYCLES").get.toInt                    // (2)
-    val SIMULATION_REACH_SECONDS = sys.env.get("SIMULATION_REACH_SECONDS").get.toInt      // (2)
-    val SIMULATION_CYCLE_SECONDS = sys.env.get("SIMULATION_CYCLE_SECONDS").get.toInt      // (2)
-    val SIMULATION_MINIMUM_PEAK = sys.env.get("SIMULATION_MINIMUM_PEAK").get.toInt        // (2)
-    val SIMULATION_MAXIMUM_PEAK = sys.env.get("SIMULATION_MAXIMUM_PEAK").get.toInt        // (2)
+    final int SIMULATION_CYCLES = Integer.parseInt(System.getenv("SIMULATION_CYCLES"));                            // (2)
+    final int SIMULATION_REACH_SECONDS = Integer.parseInt(System.getenv("SIMULATION_REACH_SECONDS"));              // (2)
+    final int SIMULATION_CYCLE_SECONDS = Integer.parseInt(System.getenv("SIMULATION_CYCLE_SECONDS"));              // (2)
+    final int SIMULATION_MINIMUM_PEAK = Integer.parseInt(System.getenv("SIMULATION_MINIMUM_PEAK"));                // (2)
+    final int SIMULATION_MAXIMUM_PEAK = Integer.parseInt(System.getenv("SIMULATION_MAXIMUM_PEAK"));                // (2)
 
-    val httpProtocol = http.baseUrl(SERVER_HOST)
+    final HttpProtocolBuilder httpProtocol = http.baseUrl(SERVER_HOST);
 
-    val test_case = scenario("BasicSimulationScala")
-        .exec(                                                                            // (3)
-            http("Authentication")                                                        // (3)
-                .get("/api/token")                                                        // (3)
-                .basicAuth(API_USERNAME, API_PASSWORD)                                    // (3)
-                .check(status.is(200))                                                    // (3)
-                .check(jsonPath("$.access").saveAs("jwt_token"))                          // (3)
-        )                                                                                 // (3)
-        .exitHereIfFailed
-        .exec(                                                                            // (4)
-            http("GetUsers")                                                              // (4)
-                .get("/api/users")                                                        // (4)
-                .header("Authorization", "JWT ${jwt_token}")                              // (4)
-                .check(status.is(200))                                                    // (4)
-        )                                                                                 // (4)
+    final ScenarioBuilder test_case = scenario("BasicSimulation")
+        .exec(                                                                                                     // (3)
+            http("Authentication")                                                                                 // (3)
+                .get("/api/token")                                                                                 // (3)
+                .basicAuth(API_USERNAME, API_PASSWORD)                                                             // (3)
+                .check(status().is(200))                                                                           // (3)
+                .check(jsonPath("$.access").saveAs("jwt_token"))                                                   // (3)
+        )                                                                                                          // (3)
+        .exitHereIfFailed()
+        .exec(                                                                                                     // (4)
+            http("GetUsers")                                                                                       // (4)
+                .get("/api/users")                                                                                 // (4)
+                .header("Authorization", "JWT ${jwt_token}")                                                       // (4)
+                .check(status().is(200))                                                                           // (4)
+        );                                                                                                         // (4)
 
-    var simulation_cycle = List(                                                          // (5)
-        reachRps(SIMULATION_MINIMUM_PEAK).in(SIMULATION_REACH_SECONDS.seconds),           // (5)
-        holdFor(SIMULATION_CYCLE_SECONDS.seconds)                                         // (5)
-    )                                                                                     // (5)
+    {
+        ArrayList<ThrottleStep> simulation_cycle = new ArrayList<ThrottleStep>();                                  // (5)
+        simulation_cycle.add(reachRps(SIMULATION_MINIMUM_PEAK).in(Duration.ofSeconds(SIMULATION_REACH_SECONDS)));  // (5)
+        simulation_cycle.add(holdFor(Duration.ofSeconds(SIMULATION_CYCLE_SECONDS)));                               // (5)
 
-    for(interval <- 0 until SIMULATION_CYCLES)                                            // (6)
-    {                                                                                     // (6)
-        simulation_cycle = simulation_cycle :+ jumpToRps(SIMULATION_MAXIMUM_PEAK)         // (6)
-        simulation_cycle = simulation_cycle :+ holdFor(SIMULATION_CYCLE_SECONDS.seconds)  // (6)
-        simulation_cycle = simulation_cycle :+ jumpToRps(SIMULATION_MINIMUM_PEAK)         // (6)
-        simulation_cycle = simulation_cycle :+ holdFor(SIMULATION_CYCLE_SECONDS.seconds)  // (6)
-    }                                                                                     // (6)
+        for (int interval = 0; interval < SIMULATION_CYCLES; interval++) {                                         // (6)
+            simulation_cycle.add(jumpToRps(SIMULATION_MAXIMUM_PEAK));                                              // (6)
+            simulation_cycle.add(holdFor(SIMULATION_CYCLE_SECONDS));                                               // (6)
+            simulation_cycle.add(jumpToRps(SIMULATION_MINIMUM_PEAK));                                              // (6)
+            simulation_cycle.add(holdFor(SIMULATION_CYCLE_SECONDS));                                               // (6)
+        }                                                                                                          // (6)
 
-    setUp(
-        test_case.inject(
-            constantUsersPerSec(SIMULATION_MAXIMUM_PEAK).during(
-                (SIMULATION_REACH_SECONDS + SIMULATION_CYCLE_SECONDS + (SIMULATION_CYCLES * SIMULATION_CYCLE_SECONDS * 2)).seconds
+        setUp(
+            test_case.injectOpen(
+                constantUsersPerSec(SIMULATION_MAXIMUM_PEAK).during(Duration.ofSeconds(
+                    SIMULATION_REACH_SECONDS + SIMULATION_CYCLE_SECONDS + (SIMULATION_CYCLES * SIMULATION_CYCLE_SECONDS * 2)
+                ))
             )
         )
-    )
-    .throttle(
-        simulation_cycle:_*
-    )
-    .protocols(httpProtocol)
+        .throttle(
+            simulation_cycle
+        )
+        .protocols(httpProtocol);
+    }
 }
 ```
 
